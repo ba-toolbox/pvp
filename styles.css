@@ -1,0 +1,215 @@
+:root {
+    --item-height: 3.5rem;
+    --visible-count: 12;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #0c0c0e;
+    color: #f4f4f5;
+    font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+  }
+
+  .clock-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 18rem);
+    gap: 1.25rem;
+    align-items: start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 10vh 1.25rem 1.25rem;
+    max-width: 72rem;
+    margin: 0 auto;
+  }
+
+  .clock {
+    display: grid;
+    place-items: start center;
+    min-width: 0;
+  }
+
+  .day-list {
+    --day-row-height: 26px;
+    height: calc(var(--item-height) * var(--visible-count));
+    min-height: 0;
+    border: 1px solid #27272a;
+    border-radius: 0.5rem;
+    background: #111113;
+    overflow: hidden;
+  }
+
+  .day-list__viewport {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+    scrollbar-color: #3f3f46 #111113;
+  }
+
+  .day-list__viewport::-webkit-scrollbar {
+    width: 0.45rem;
+  }
+
+  .day-list__viewport::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+    border-radius: 999px;
+  }
+
+  .day-list__content {
+    position: relative;
+    width: 100%;
+  }
+
+  .day-list__row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0 0.45rem;
+    user-select: none;
+  }
+
+  .day-list__row--current {
+    background: #1c1c21;
+  }
+
+  .day-list__time {
+    flex: 0 0 4.1rem;
+    font-size: 0.62rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    color: #71717a;
+  }
+
+  .day-list__row--current .day-list__time {
+    color: #fafafa;
+    font-weight: 600;
+  }
+
+  .day-list__perm {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .day-list__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.95rem;
+    height: 0.95rem;
+    border: 1px solid #3f3f46;
+    margin-left: -1px;
+    font-size: 0.52rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: #71717a;
+  }
+
+  .day-list__num:first-child {
+    margin-left: 0;
+  }
+
+  .day-list__row--current .day-list__num {
+    border-color: #71717a;
+    color: #e4e4e7;
+  }
+
+  .clock__viewport {
+    position: relative;
+    height: calc(var(--item-height) * var(--visible-count));
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 6%,
+      #000 72%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 6%,
+      #000 72%,
+      transparent 100%
+    );
+  }
+
+  .clock__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    transform: translateY(0);
+    transition: transform 0.2s linear;
+    will-change: transform;
+  }
+
+  .clock__list--instant {
+    transition: none;
+  }
+
+  .clock__item {
+    height: var(--item-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    user-select: none;
+  }
+
+  .clock__time {
+    width: 8.5rem;
+    text-align: center;
+    font-size: 1.35rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    color: #71717a;
+  }
+
+  .clock__perm {
+    display: flex;
+    align-items: center;
+  }
+
+  .clock__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid #52525b;
+    margin-left: -1px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: #71717a;
+  }
+
+  .clock__num:first-child {
+    margin-left: 0;
+  }
+
+  .clock__item--current .clock__time {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #fafafa;
+  }
+
+  .clock__item--current .clock__num {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-color: #a1a1aa;
+    font-size: 1.1rem;
+    color: #fafafa;
+  }
