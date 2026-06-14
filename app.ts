@@ -42,7 +42,6 @@ const PERMUTATION_COUNT = 720;
 const FACTORIALS = [1, 1, 2, 6, 24, 120, 720] as const;
 const MISSING_PERMUTATION: DisplayPermutation = ["?", "?", "?", "?", "?", "?"];
 const TICK_ANIMATION_MS = 200;
-const IMAGE_FETCH_SECOND = 30;
 const DAY_OVERSCAN = 8;
 
 const listElement = document.getElementById("list");
@@ -70,13 +69,11 @@ let tickFrameId: number | undefined;
 let animationBoundary: Temporal.Instant | undefined;
 let pendingBase: Temporal.ZonedDateTime | undefined;
 let pendingItems: ClockItem[] | undefined;
-let lastJstFetchMinute: string | undefined;
 let dayListCurrentIndex = -1;
 let lastDayListJstSecond = -1;
 let dayListScrollRenderPending = false;
 
 const imageCache = new Map<string, ImageData>();
-const prefetchInFlight = new Set<string>();
 
 function currentZonedSecond(): Temporal.ZonedDateTime {
   const now = Temporal.Now.zonedDateTimeISO();
@@ -319,66 +316,19 @@ async function loadPermutationImageForDate(
   return imageData;
 }
 
-function prefetchPermutationImageForDate(plainDate: Temporal.PlainDate): void {
-  const dateKey = plainDate.toString();
-  if (imageCache.has(dateKey) || prefetchInFlight.has(dateKey)) {
-    return;
-  }
-
-  prefetchInFlight.add(dateKey);
-  void loadPermutationImageForDate(plainDate).finally(() => {
-    prefetchInFlight.delete(dateKey);
-  });
-}
-
-function isJstImageFetchSecond(): boolean {
-  return currentJstZoned().second === IMAGE_FETCH_SECOND;
-}
-
-function jstFetchMinuteKey(): string {
-  const jst = currentJstZoned();
-  const { hour, minute } = jst;
-  return `${jst.toPlainDate().toString()}T${hour}:${minute}`;
-}
-
-async function ensureTodayJstImage(): Promise<void> {
+async function loadInitialImages(): Promise<void> {
   const todayJst = currentJstZoned().toPlainDate();
-  const imageData = await loadPermutationImageForDate(todayJst);
-  if (imageData) {
-    if (!animating) {
-      items = buildItems(currentBase);
-      renderItems(items, CENTER_INDEX);
-    }
-    renderDayVirtualList();
-  }
-}
-
-function prefetchTomorrowIfAfternoonJst(): void {
-  if (!isAfternoonJst()) {
-    return;
+  const datesToLoad = [todayJst];
+  if (isAfternoonJst()) {
+    datesToLoad.push(todayJst.add({ days: 1 }));
   }
 
-  const tomorrowJst = currentJstZoned().toPlainDate().add({ days: 1 });
-  prefetchPermutationImageForDate(tomorrowJst);
-}
+  await Promise.all(datesToLoad.map((date) => loadPermutationImageForDate(date)));
 
-function fetchJstImages(): void {
-  void ensureTodayJstImage();
-  prefetchTomorrowIfAfternoonJst();
-}
-
-function refreshJstImages(): void {
-  if (!isJstImageFetchSecond()) {
-    return;
+  if (imageCache.has(todayJst.toString()) && !animating) {
+    items = buildItems(currentBase);
+    renderItems(items, CENTER_INDEX);
   }
-
-  const minuteKey = jstFetchMinuteKey();
-  if (lastJstFetchMinute === minuteKey) {
-    return;
-  }
-
-  lastJstFetchMinute = minuteKey;
-  fetchJstImages();
 }
 
 function permutationsFor(localZoned: Temporal.ZonedDateTime): ExtractedPermutations {
@@ -542,7 +492,6 @@ function beginAnimation(nextBase: Temporal.ZonedDateTime, boundaryInstant: Tempo
 }
 
 function runClockTick(): void {
-  refreshJstImages();
   updateDayListHighlight();
 
   if (animating) {
@@ -585,11 +534,7 @@ async function init(): Promise<void> {
   items = buildItems(currentBase);
   renderItems(items, CENTER_INDEX);
   resetListPosition();
-  await ensureTodayJstImage();
-  prefetchTomorrowIfAfternoonJst();
-  if (isJstImageFetchSecond()) {
-    lastJstFetchMinute = jstFetchMinuteKey();
-  }
+  await loadInitialImages();
   initDayVirtualList();
   startClockLoop();
 }
